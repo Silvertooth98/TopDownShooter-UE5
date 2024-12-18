@@ -112,7 +112,7 @@ void ATDSCharacter::LookAt(float DeltaSeconds)
 
 	const FRotator ActorRot = GetActorRotation();
 	const FVector Target = HitResult.ImpactPoint - GetActorLocation();
-	const FRotator LookAt = UKismetMathLibrary::FindLookAtRotation(FVector(0.f), Target);
-	const FRotator InterpTo = UKismetMathLibrary::RInterpTo_Constant(ActorRot, LookAt, DeltaSeconds, RotationSpeed);
+	LookAtTarget = UKismetMathLibrary::FindLookAtRotation(FVector(0.f), Target);
+	const FRotator InterpTo = UKismetMathLibrary::RInterpTo_Constant(ActorRot, LookAtTarget, DeltaSeconds, RotationSpeed);
 	SetActorRotation(FRotator(ActorRot.Pitch, InterpTo.Yaw, ActorRot.Roll));
 }

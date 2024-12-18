@@ -53,5 +53,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character", Meta = (AllowPrivateAccess = "true"))
 	float RotationSpeed = 300.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character", Meta = (AllowPrivateAccess = "true"))
+	FRotator LookAtTarget;
 };
 
