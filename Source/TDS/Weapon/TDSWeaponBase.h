@@ -49,6 +49,9 @@ public:
 	TSubclassOf<ATDSPickuppable> PickupClass = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
+	FName SocketName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
 	TSubclassOf<UAnimInstance> WeaponAnimInstance = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
