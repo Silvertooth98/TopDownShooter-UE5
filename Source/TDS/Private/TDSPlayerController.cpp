@@ -2,8 +2,6 @@
 
 #include "TDSPlayerController.h"
 
-#include "TDSCharacter.h"
-
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ATDSPlayerController::ATDSPlayerController()

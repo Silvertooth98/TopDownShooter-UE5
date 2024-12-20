@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "TDSCharacter.h"
+#include "Character/TDSCharacter.h"
 
 #include <Camera/CameraComponent.h>
 #include <Components/DecalComponent.h>

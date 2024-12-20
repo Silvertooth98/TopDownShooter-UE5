@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TDSWeaponBase.h"
+#include "Weapon/TDSWeaponBase.h"
 
 #include <Components/SkeletalMeshComponent.h>
 

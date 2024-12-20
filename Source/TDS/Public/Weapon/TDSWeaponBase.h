@@ -67,7 +67,7 @@ public:
 	TObjectPtr<UCurveVector> RecoilPattern;
 };
 
-UCLASS()
+UCLASS(Abstract, Blueprintable)
 class TDS_API ATDSWeaponBase : public AActor
 {
 	GENERATED_BODY()
