@@ -12,6 +12,7 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+**/Content/Audio
 **/Content/Characters
 **/Content/Cursor
 **/Content/StarterContent
