@@ -9,6 +9,7 @@
 #include "TDSWeaponBase.generated.h"
 
 class UAnimInstance;
+class UAnimMontage;
 class ATDSPickuppable;
 class UCurveVector;
 class USkeletalMeshComponent;
@@ -55,6 +56,9 @@ public:
 	TSubclassOf<UAnimInstance> WeaponAnimInstance = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
+	TObjectPtr<UAnimMontage> CharacterFireAnimMontage = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
 	float Damage = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
@@ -62,6 +66,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
 	float MaxAmmo = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
+	float FireDelay = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
 	TObjectPtr<UCurveVector> RecoilPattern;
