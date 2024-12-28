@@ -58,6 +58,10 @@ public:
 	int32 GetCurrentAmmo() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	ETDSWeaponFireMode GetFireMode() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	int32 GetBulletsPerBurst() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	float GetBurstDelay() const;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
@@ -97,8 +101,11 @@ protected:
 	UPROPERTY(Transient, BlueprintReadWrite, Category = "Weapon|Data")
 	int32 CurrentAmmo = 0;
 
+	bool bStopShooting = false;
+	bool bBurstDelayActive = false;
+
 	float TimeSinceLastFired = 0.f;
-	bool bContinueFiring = false;
+	int32 BulletsFiredInBurst = 0;
 };
 
 inline UAnimMontage* ATDSWeapon_Ranged::GetCharacterFireAnimMontage() const
@@ -144,6 +151,16 @@ inline int32 ATDSWeapon_Ranged::GetCurrentAmmo() const
 inline ETDSWeaponFireMode ATDSWeapon_Ranged::GetFireMode() const
 {
 	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->FireMode : ETDSWeaponFireMode::SemiAutomatic;
+}
+
+inline int32 ATDSWeapon_Ranged::GetBulletsPerBurst() const
+{
+	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->BulletsPerBurst : 0;
+}
+
+inline float ATDSWeapon_Ranged::GetBurstDelay() const
+{
+	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->BurstDelay : 0.f;
 }
 
 inline bool ATDSWeapon_Ranged::CanShoot() const

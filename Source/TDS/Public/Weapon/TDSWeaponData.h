@@ -74,6 +74,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
 	ETDSWeaponFireMode FireMode = ETDSWeaponFireMode::SemiAutomatic;
 
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "Weapon|Ranged",
+		Meta = (EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides))
+	int32 BulletsPerBurst = 0;
+
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "Weapon|Ranged",
+		Meta = (EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides))
+	float BurstDelay = 0.f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
 	TObjectPtr<UCurveVector> RecoilPattern;
 };

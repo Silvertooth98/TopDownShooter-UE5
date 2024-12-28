@@ -34,41 +34,100 @@ void ATDSWeapon_Ranged::Tick(float DeltaSeconds)
 	if (WeaponState == ETDSWeaponState::Active)
 	{
 		TimeSinceLastFired += DeltaSeconds;
-		if (GetAttackDelay() <= TimeSinceLastFired)
+
+		const ETDSWeaponFireMode FireMode = GetFireMode();
+		if (FireMode != ETDSWeaponFireMode::Burst)
 		{
+			if (GetAttackDelay() > TimeSinceLastFired)
+			{
+				return;
+			}
 			TimeSinceLastFired = 0.f;
 			WeaponState = ETDSWeaponState::Ready;
-			if (!bContinueFiring)
+		}
+
+		switch (FireMode)
+		{
+		case ETDSWeaponFireMode::Burst:
+		{
+			// If there's an active burst delay, meaning a full burst has been fired and we're waiting to
+			//	fire the next burst, check against the BurstDelay
+			if (bBurstDelayActive)
 			{
-				return;
+				// If the BurstDelay has been reached, reset the weapon ready to start shooting again
+				if (GetBurstDelay() <= TimeSinceLastFired)
+				{
+					BulletsFiredInBurst = 0;
+					bBurstDelayActive = false;
+					WeaponState = ETDSWeaponState::Ready;
+
+					// Check if the player has released the shoot button to avoid triggering the next burst
+					if (bStopShooting)
+					{
+						bStopShooting = false;
+						return;
+					}
+
+					StartShooting();
+				}
+				break;
 			}
-
-			switch (GetFireMode())
+			// Otherwise, we're actively firing a burst of bullets, so check against the AttackDelay
+			else if (GetAttackDelay() <= TimeSinceLastFired)
 			{
-			case ETDSWeaponFireMode::Burst:
-				// conor.micallefgreen 28/12/24 TODO: Check if burst is complete before firing again
-				return;
+				TimeSinceLastFired = 0.f;
+				BulletsFiredInBurst++;
 
-			case ETDSWeaponFireMode::Automatic:
+				// If the weapon has no ammo, immediately reset the weapon and play the DryFire animation
+				if (!HasAmmo())
+				{
+					PlayDryFireMontage();
+					BulletsFiredInBurst = 0;
+					WeaponState = ETDSWeaponState::Ready;
+					bStopShooting = false;
+					return;
+				}
+
+				// If the burst has fired all of the required bullets, start the BurstDelay logic
+				if (GetBulletsPerBurst() == BulletsFiredInBurst)
+				{
+					BulletsFiredInBurst = 0;
+					bBurstDelayActive = true;
+					break;
+				}
+
+				WeaponState = ETDSWeaponState::Ready;
 				StartShooting();
-				break;
-
-			case ETDSWeaponFireMode::Single:		// Intentional fall-through
-			case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
-			default:
-				break;
 			}
+		}
+		break;
+
+		case ETDSWeaponFireMode::Automatic:
+		{
+			if (bStopShooting)
+			{
+				bStopShooting = false;
+				return;
+			}
+			StartShooting();
+		}
+		break;
+
+		case ETDSWeaponFireMode::Single:		// Intentional fall-through
+		case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
+		default:
+			break;
 		}
 	}
 }
 
 void ATDSWeapon_Ranged::StartShooting()
 {
-	// When the player stops shooting and tries to shoot again whilst the FireDelay is active, set bContinueFiring
-	//	to true, so once the FireDelay ends, the next shot will trigger if possible.
-	if (WeaponState == ETDSWeaponState::Active && !bContinueFiring)
+	// When the player stops shooting and tries to shoot again whilst the FireDelay is active, set bStopShooting
+	//	back to false, so once the FireDelay ends, the next shot will trigger if possible
+	if (WeaponState == ETDSWeaponState::Active && bStopShooting)
 	{
-		bContinueFiring = true;
+		bStopShooting = false;
 		return;
 	}
 
@@ -101,7 +160,23 @@ void ATDSWeapon_Ranged::StartShooting()
 
 void ATDSWeapon_Ranged::StopShooting()
 {
-	bContinueFiring = false;
+	if (WeaponState != ETDSWeaponState::Active)
+	{
+		return;
+	}
+
+	switch (GetFireMode())
+	{
+	case ETDSWeaponFireMode::Burst:			// Intentional fall-through
+	case ETDSWeaponFireMode::Automatic:		// Intentional fall-through
+		bStopShooting = true;
+		break;
+
+	case ETDSWeaponFireMode::Single:		// Intentional fall-through
+	case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
+	default:
+		break;
+	}
 }
 
 void ATDSWeapon_Ranged::Reload()
@@ -198,7 +273,6 @@ void ATDSWeapon_Ranged::BulletFired()
 	CurrentAmmo--;
 	WeaponState = ETDSWeaponState::Active;
 	
-	bContinueFiring = true;
 	TimeSinceLastFired = 0.f;
 
 	BP_OnBulletFired();
