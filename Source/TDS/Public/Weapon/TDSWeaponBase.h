@@ -6,6 +6,9 @@
 
 #include <GameFramework/Actor.h>
 
+#include "Weapon/TDSWeaponTypes.h"
+#include "Weapon/TDSWeaponData.h"
+
 #include "TDSWeaponBase.generated.h"
 
 class UAnimInstance;
@@ -13,66 +16,6 @@ class UAnimMontage;
 class ATDSPickuppable;
 class UCurveVector;
 class USkeletalMeshComponent;
-
-UENUM(BlueprintType)
-enum class ETDSWeaponUseMode : uint8
-{
-	HitScan,
-	Projectile,
-	Melee
-};
-
-UENUM(BlueprintType)
-enum class ETDSWeaponType : uint8
-{
-	Primary,
-	Secondary,
-	Utility
-};
-
-// Move into separate structs for melee and ranged weapons
-USTRUCT(BlueprintType)
-struct FTDSWeaponData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	FName WeaponName;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	ETDSWeaponType WeaponType = ETDSWeaponType::Primary;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	ETDSWeaponUseMode UseMode = ETDSWeaponUseMode::Projectile;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	TSubclassOf<ATDSPickuppable> PickupClass = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	FName SocketName;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	TSubclassOf<UAnimInstance> WeaponAnimInstance = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	TObjectPtr<UAnimMontage> CharacterFireAnimMontage = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	float Damage = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	float Range = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	float MaxAmmo = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	float FireDelay = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
-	TObjectPtr<UCurveVector> RecoilPattern;
-};
 
 UCLASS(Abstract, Blueprintable)
 class TDS_API ATDSWeaponBase : public AActor
@@ -88,10 +31,78 @@ public:
 
 	void Equip();
 
-private:
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	FName GetWeaponData() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	ETDSWeaponType GetWeaponType() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	ETDSWeaponUseMode GetWeaponUseMode() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	TSubclassOf<ATDSPickuppable> GetPickupClass() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	FName GetSocketName() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	TSubclassOf<UAnimInstance> GetWeaponAnimInstance() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	float GetDamage() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	float GetAttackDelay() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	bool IsWeaponIsUse() const;
+
+protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data", Meta = (AllowPrivateAccess = "true"))
-	FTDSWeaponData WeaponData;
+	TObjectPtr<UTDSWeaponData> WeaponDataAsset;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> WeaponSkeletalMesh;
+
+	UPROPERTY(Transient)
+	ETDSWeaponState WeaponState = ETDSWeaponState::Ready;
 };
+
+inline FName ATDSWeaponBase::GetWeaponData() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->WeaponName : TEXT("Invalid");
+}
+
+inline ETDSWeaponType ATDSWeaponBase::GetWeaponType() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->WeaponType : ETDSWeaponType::Primary;
+}
+
+inline ETDSWeaponUseMode ATDSWeaponBase::GetWeaponUseMode() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->UseMode : ETDSWeaponUseMode::HitScan;
+}
+
+inline TSubclassOf<ATDSPickuppable> ATDSWeaponBase::GetPickupClass() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->PickupClass : nullptr;
+}
+
+inline FName ATDSWeaponBase::GetSocketName() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->SocketName : TEXT("Invalid");
+}
+
+inline TSubclassOf<UAnimInstance> ATDSWeaponBase::GetWeaponAnimInstance() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->WeaponAnimInstance : nullptr;
+}
+
+inline float ATDSWeaponBase::GetDamage() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->Damage : 0.f;
+}
+
+inline float ATDSWeaponBase::GetAttackDelay() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->AttackDelay : 0.f;
+}
+
+inline bool ATDSWeaponBase::IsWeaponIsUse() const
+{
+	return WeaponState == ETDSWeaponState::Active;
+}
