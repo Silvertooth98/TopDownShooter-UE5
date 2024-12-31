@@ -6,12 +6,14 @@
 #include <Animation/AnimMontage.h>
 #include <Components/CapsuleComponent.h>
 #include <Components/PrimitiveComponent.h>
+#include <Engine/TimerHandle.h>
 #include <Engine/World.h>
 #include <GameFramework/Character.h>
 #include <GameFramework/Controller.h>
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
 #include <Kismet/KismetMathLibrary.h>
+#include <TimerManager.h>
 
 #include "Weapon/Projectile/TDSProjectile.h"
 
@@ -34,97 +36,13 @@ void ATDSWeapon_Ranged::Tick(float DeltaSeconds)
 	if (WeaponState == ETDSWeaponState::Active)
 	{
 		TimeSinceLastFired += DeltaSeconds;
-
-		const ETDSWeaponFireMode FireMode = GetFireMode();
-		if (FireMode != ETDSWeaponFireMode::Burst)
-		{
-			if (GetAttackDelay() > TimeSinceLastFired)
-			{
-				return;
-			}
-			TimeSinceLastFired = 0.f;
-			WeaponState = ETDSWeaponState::Ready;
-		}
-
-		switch (FireMode)
-		{
-		case ETDSWeaponFireMode::Burst:
-		{
-			// If there's an active burst delay, meaning a full burst has been fired and we're waiting to
-			//	fire the next burst, check against the BurstDelay
-			if (bBurstDelayActive)
-			{
-				// If the BurstDelay has been reached, reset the weapon ready to start shooting again
-				if (GetBurstDelay() <= TimeSinceLastFired)
-				{
-					BulletsFiredInBurst = 0;
-					bBurstDelayActive = false;
-					WeaponState = ETDSWeaponState::Ready;
-
-					// Check if the player has released the shoot button to avoid triggering the next burst
-					if (bStopShooting)
-					{
-						bStopShooting = false;
-						return;
-					}
-
-					StartShooting();
-				}
-				break;
-			}
-			// Otherwise, we're actively firing a burst of bullets, so check against the AttackDelay
-			else if (GetAttackDelay() <= TimeSinceLastFired)
-			{
-				TimeSinceLastFired = 0.f;
-				BulletsFiredInBurst++;
-
-				// If the weapon has no ammo, immediately reset the weapon and play the DryFire animation
-				if (!HasAmmo())
-				{
-					PlayDryFireMontage();
-					BulletsFiredInBurst = 0;
-					WeaponState = ETDSWeaponState::Ready;
-					bStopShooting = false;
-					return;
-				}
-
-				// If the burst has fired all of the required bullets, start the BurstDelay logic
-				if (GetBulletsPerBurst() == BulletsFiredInBurst)
-				{
-					BulletsFiredInBurst = 0;
-					bBurstDelayActive = true;
-					break;
-				}
-
-				WeaponState = ETDSWeaponState::Ready;
-				StartShooting();
-			}
-		}
-		break;
-
-		case ETDSWeaponFireMode::Automatic:
-		{
-			if (bStopShooting)
-			{
-				bStopShooting = false;
-				return;
-			}
-			StartShooting();
-		}
-		break;
-
-		case ETDSWeaponFireMode::Single:		// Intentional fall-through
-		case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
-		default:
-			break;
-		}
 	}
 }
 
 void ATDSWeapon_Ranged::StartShooting()
 {
-	// When the player stops shooting and tries to shoot again whilst the FireDelay is active, set bStopShooting
-	//	back to false, so once the FireDelay ends, the next shot will trigger if possible
+	// When the player stops holding the shoot input and tries to shoot again whilst the weapon is still
+	//	actively shooting, set bStopShooting back to false, so the next shot will trigger when required
 	if (WeaponState == ETDSWeaponState::Active && bStopShooting)
 	{
 		bStopShooting = false;
@@ -136,26 +54,7 @@ void ATDSWeapon_Ranged::StartShooting()
 		return;
 	}
 
-	if (!HasAmmo())
-	{
-		PlayDryFireMontage();
-		return;
-	}
-
-	switch (GetWeaponUseMode())
-	{
-	case ETDSWeaponUseMode::HitScan:
-		Shoot_HitScan();
-		break;
-
-	case ETDSWeaponUseMode::Projectile:
-		Shoot_Projectile();
-		break;
-
-	case ETDSWeaponUseMode::Melee:	// Intentional fall-through
-	default:
-		break;
-	}
+	ShootWeapon();
 }
 
 void ATDSWeapon_Ranged::StopShooting()
@@ -165,18 +64,8 @@ void ATDSWeapon_Ranged::StopShooting()
 		return;
 	}
 
-	switch (GetFireMode())
-	{
-	case ETDSWeaponFireMode::Burst:			// Intentional fall-through
-	case ETDSWeaponFireMode::Automatic:		// Intentional fall-through
-		bStopShooting = true;
-		break;
-
-	case ETDSWeaponFireMode::Single:		// Intentional fall-through
-	case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
-	default:
-		break;
-	}
+	ShootHandle.Invalidate();
+	bStopShooting = true;
 }
 
 void ATDSWeapon_Ranged::Reload()
@@ -199,6 +88,67 @@ void ATDSWeapon_Ranged::Reload()
 
 		OnMontageEndedDelegate.BindUObject(this, &ThisClass::OnReloadMontageEnded);
 		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ReloadAnimMontageToPlay);
+	}
+}
+
+void ATDSWeapon_Ranged::ShootWeapon()
+{
+	// If player is no longer holding the shoot button, or the burst has finished, stop shooting
+	if (bStopShooting)
+	{
+		const ETDSWeaponFireMode FireMode = GetFireMode();
+		// For burst weapons, don't block the next bullet being fired when requested until all required
+		//	bullets in the burst have been fired
+		if (FireMode != ETDSWeaponFireMode::Burst ||
+			FireMode == ETDSWeaponFireMode::Burst && BulletsFiredInBurst == 0)
+		{
+			bStopShooting = false;
+			ShootHandle.Invalidate();
+			WeaponState = ETDSWeaponState::Ready;
+			return;
+		}
+	}
+	// Stop single-shot and semi-automatic weapons from firing again.
+	// Need to do this here via the timer set within BulletFired() to block the player from being
+	//	able to fire faster than the weapon's AttackDelay
+	else
+	{
+		switch (GetFireMode())
+		{
+		case ETDSWeaponFireMode::SemiAutomatic:
+		case ETDSWeaponFireMode::Single:
+			if (WeaponState == ETDSWeaponState::Active)
+			{
+				ShootHandle.Invalidate();
+				WeaponState = ETDSWeaponState::Ready;
+				return;
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	if (!HasAmmo())
+	{
+		PlayDryFireMontage();
+		return;
+	}
+
+	switch (GetWeaponUseMode())
+	{
+	case ETDSWeaponUseMode::HitScan:
+		Shoot_HitScan();
+		break;
+
+	case ETDSWeaponUseMode::Projectile:
+		Shoot_Projectile();
+		break;
+
+	case ETDSWeaponUseMode::Melee:	// Intentional fall-through
+	default:
+		break;
 	}
 }
 
@@ -234,6 +184,7 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 	const FVector StartLoc = MuzzleSocketTransform.GetLocation();
 	const FVector TargetLoc = CalculateTargetLocation();
 
+	// conor.micallefgreen 31/12/24 TODO: Implement MuzzleOffset value
 	//const FVector TargetLoc = StartLoc + MuzzleSocketTransform.RotateVector(MuzzleOffset);
 	const FRotator Rot =
 		UKismetMathLibrary::FindLookAtRotation(StartLoc, TargetLoc);
@@ -270,6 +221,12 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 
 void ATDSWeapon_Ranged::BulletFired()
 {
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
 #if !UE_BUILD_SHIPPING
 	if (!CVarInfiniteAmmo.GetValueOnGameThread())
 	{
@@ -284,6 +241,41 @@ void ATDSWeapon_Ranged::BulletFired()
 	TimeSinceLastFired = 0.f;
 
 	BP_OnBulletFired();
+
+	switch (GetFireMode())
+	{
+	case ETDSWeaponFireMode::Automatic:		// Intentional fall-through
+	case ETDSWeaponFireMode::SemiAutomatic:	// Intentional fall-through
+	case ETDSWeaponFireMode::Single:
+		World->GetTimerManager().SetTimer(
+			ShootHandle,
+			this,
+			&ThisClass::ShootWeapon,
+			GetAttackDelay(),
+			/*bLooping*/ false);
+		break;
+	case ETDSWeaponFireMode::Burst:
+	{
+		BulletsFiredInBurst++;
+		float DelayTime = GetAttackDelay();
+		// If the burst has fired all of the required bullets, delay the next shot by the BurstDelay
+		if (BulletsFiredInBurst == GetBulletsPerBurst())
+		{
+			DelayTime = GetBurstDelay();
+			BulletsFiredInBurst = 0;
+		}
+		World->GetTimerManager().SetTimer(
+			ShootHandle,
+			this,
+			&ThisClass::ShootWeapon,
+			DelayTime,
+			/*bLooping*/ false);
+	}
+	break;
+
+	default:
+		break;
+	}
 
 	UAnimInstance* AnimInstance = GetOwnerAnimInstance();
 	if (AnimInstance == nullptr)

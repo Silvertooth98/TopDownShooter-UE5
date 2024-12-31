@@ -16,6 +16,8 @@ class UPrimitiveComponent;
 
 class ATDSProjectile;
 
+struct FTimerHandle;
+
 /**
  * Base class for ranged weapons
  */
@@ -71,6 +73,9 @@ protected:
 		FVector HitResultLocation, AActor* HitActor, UPrimitiveComponent* HitComponent);
 
 private:
+	UFUNCTION()
+	void ShootWeapon();
+
 	void Shoot_HitScan();
 	void Shoot_Projectile();
 	void BulletFired();
@@ -106,6 +111,8 @@ protected:
 
 	float TimeSinceLastFired = 0.f;
 	int32 BulletsFiredInBurst = 0;
+
+	FTimerHandle ShootHandle;
 };
 
 inline UAnimMontage* ATDSWeapon_Ranged::GetCharacterFireAnimMontage() const
