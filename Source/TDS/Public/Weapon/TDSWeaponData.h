@@ -34,6 +34,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
 	FName SocketName;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data")
+	FTransform AttachTransform;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Animation")
 	TSubclassOf<UAnimInstance> WeaponAnimInstance = nullptr;
 

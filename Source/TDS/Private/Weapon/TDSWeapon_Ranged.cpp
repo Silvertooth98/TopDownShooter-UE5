@@ -270,7 +270,15 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 
 void ATDSWeapon_Ranged::BulletFired()
 {
+#if !UE_BUILD_SHIPPING
+	if (!CVarInfiniteAmmo.GetValueOnGameThread())
+	{
+		CurrentAmmo--;
+	}
+#else
 	CurrentAmmo--;
+#endif	// !UE_BUILD_SHIPPING
+
 	WeaponState = ETDSWeaponState::Active;
 	
 	TimeSinceLastFired = 0.f;

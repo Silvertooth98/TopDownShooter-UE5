@@ -17,6 +17,14 @@ class ATDSPickuppable;
 class UCurveVector;
 class USkeletalMeshComponent;
 
+#if !UE_BUILD_SHIPPING
+static TAutoConsoleVariable<bool> CVarInfiniteAmmo(
+	TEXT("InfiniteAmmo"),
+	false,
+	TEXT("Enable/Disable Infinite Ammo Cheat. true = Infinite Ammo, false = Normal Ammo"),
+	ECVF_Cheat);
+#endif	// !UE_BUILD_SHIPPING
+
 UCLASS(Abstract, Blueprintable)
 class TDS_API ATDSWeaponBase : public AActor
 {
@@ -41,6 +49,8 @@ public:
 	TSubclassOf<ATDSPickuppable> GetPickupClass() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	FName GetSocketName() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	FTransform GetAttachTransform() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	TSubclassOf<UAnimInstance> GetWeaponAnimInstance() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
@@ -85,6 +95,11 @@ inline TSubclassOf<ATDSPickuppable> ATDSWeaponBase::GetPickupClass() const
 inline FName ATDSWeaponBase::GetSocketName() const
 {
 	return WeaponDataAsset != nullptr ? WeaponDataAsset->SocketName : TEXT("Invalid");
+}
+
+inline FTransform ATDSWeaponBase::GetAttachTransform() const
+{
+	return WeaponDataAsset != nullptr ? WeaponDataAsset->AttachTransform : FTransform();
 }
 
 inline TSubclassOf<UAnimInstance> ATDSWeaponBase::GetWeaponAnimInstance() const
