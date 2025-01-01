@@ -53,6 +53,16 @@ class TDS_API UTDSWeaponData_Ranged : public UTDSWeaponData
 	GENERATED_BODY()
 
 public:
+	UTDSWeaponData_Ranged();
+
+	// Begin UObject override
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	// End UObject override
+
+private:
+	void SetupDefaultFireModesList(TMap<ETDSWeaponFireMode, bool>& Out_FireModesList);
+
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Animation")
 	TObjectPtr<UAnimMontage> CharacterFireAnimMontage = nullptr;
 
@@ -76,20 +86,31 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
 	ETDSWeaponFireMode FireMode = ETDSWeaponFireMode::SemiAutomatic;
+	UPROPERTY()
+	ETDSWeaponFireMode PrevFireMode = ETDSWeaponFireMode::SemiAutomatic;
 
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "Weapon|Ranged",
-		Meta = (EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides))
-	int32 BulletsPerBurst = 0;
+		Meta = (
+			EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides,
+			ClampMin = 2, UIMin = 2))
+	int32 BulletsPerBurst = 2;
 
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "Weapon|Ranged",
-		Meta = (EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides))
-	float BurstDelay = 0.f;
+		Meta = (
+			EditCondition = "FireMode == ETDSWeaponFireMode::Burst", EditConditionHides,
+			ClampMin = 0.05f, UIMin = 0.05f))
+	float BurstDelay = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
+	TMap<ETDSWeaponFireMode, bool> AllowedFireModesMap;
+	UPROPERTY()
+	TSet<ETDSWeaponFireMode> AllowedFireModes;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
 	TObjectPtr<UCurveVector> RecoilPattern;

@@ -27,6 +27,7 @@ void ATDSWeapon_Ranged::BeginPlay()
 		return;
 	}
 	CurrentAmmo = WeaponDataAsset_Ranged->MaxAmmo;
+	CurrentFireMode = WeaponDataAsset_Ranged->FireMode;
 }
 
 void ATDSWeapon_Ranged::Tick(float DeltaSeconds)
@@ -89,6 +90,29 @@ void ATDSWeapon_Ranged::Reload()
 		OnMontageEndedDelegate.BindUObject(this, &ThisClass::OnReloadMontageEnded);
 		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ReloadAnimMontageToPlay);
 	}
+}
+
+void ATDSWeapon_Ranged::ToggleFireMode()
+{
+	const TSet<ETDSWeaponFireMode> AllowedFireModes = GetAllowedFireModes();
+	if (AllowedFireModes.Num() == 1)
+	{
+		return;
+	}
+
+	ETDSWeaponFireMode NextFireMode = CurrentFireMode;
+	uint8 EnumMaxByte = static_cast<uint8>(ETDSWeaponFireMode::Max);
+	uint8 CurrentValueByte = static_cast<uint8>(CurrentFireMode);
+
+	bool bIsNextFireModeAllowed = false;
+	while (!bIsNextFireModeAllowed)
+	{
+		CurrentValueByte = (CurrentValueByte + 1) % EnumMaxByte;
+		NextFireMode = static_cast<ETDSWeaponFireMode>(CurrentValueByte);
+		bIsNextFireModeAllowed =
+			AllowedFireModes.Contains(NextFireMode) || NextFireMode == CurrentFireMode;
+	}
+	CurrentFireMode = NextFireMode;
 }
 
 void ATDSWeapon_Ranged::ShootWeapon()
@@ -326,6 +350,7 @@ void ATDSWeapon_Ranged::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterr
 	}
 	WeaponState = ETDSWeaponState::Ready;
 	CurrentAmmo = GetMaxAmmo();
+	BP_OnReload();
 }
 
 void ATDSWeapon_Ranged::PlayDryFireMontage()

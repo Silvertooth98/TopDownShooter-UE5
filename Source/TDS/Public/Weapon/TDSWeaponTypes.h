@@ -31,7 +31,8 @@ enum class ETDSWeaponFireMode : uint8
 	Single			UMETA(ToolTip = "Single shot fired when triggered. Reload required after each shot (eg bolt-sniper)"),
 	SemiAutomatic	UMETA(ToolTip = "Single shot fired when triggered. Automatic reload between shots (eg pistol)"),
 	Burst			UMETA(ToolTip = "Burst weapon firing X number of shots when triggered"),
-	Automatic		UMETA(ToolTip = "Fully automatic weapon, firing bullets whilst trigger is held down")
+	Automatic		UMETA(ToolTip = "Fully automatic weapon, firing bullets whilst trigger is held down"),
+	Max				UMETA(Hidden)
 };
 
 UENUM(BlueprintType)

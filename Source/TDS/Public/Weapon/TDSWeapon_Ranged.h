@@ -41,6 +41,9 @@ public:
 	void StopShooting();
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void Reload();
+	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void ToggleFireMode();
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	UAnimMontage* GetCharacterFireAnimMontage() const;
@@ -61,6 +64,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	ETDSWeaponFireMode GetFireMode() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	ETDSWeaponFireMode GetDefaultFireMode() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	TSet<ETDSWeaponFireMode> GetAllowedFireModes() const;
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	int32 GetBulletsPerBurst() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	float GetBurstDelay() const;
@@ -71,6 +78,10 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
 	void BP_OnHitScanBulletFired(
 		FVector HitResultLocation, AActor* HitActor, UPrimitiveComponent* HitComponent);
+
+	// conor.micallefgreen 01/01/25 TODO: Move to delegate that the UI binds to update the ammo counter
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
+	void BP_OnReload();
 
 private:
 	UFUNCTION()
@@ -113,6 +124,7 @@ protected:
 	int32 BulletsFiredInBurst = 0;
 
 	FTimerHandle ShootHandle;
+	ETDSWeaponFireMode CurrentFireMode = ETDSWeaponFireMode::SemiAutomatic;
 };
 
 inline UAnimMontage* ATDSWeapon_Ranged::GetCharacterFireAnimMontage() const
@@ -157,7 +169,19 @@ inline int32 ATDSWeapon_Ranged::GetCurrentAmmo() const
 
 inline ETDSWeaponFireMode ATDSWeapon_Ranged::GetFireMode() const
 {
+	return CurrentFireMode;
+}
+
+inline ETDSWeaponFireMode ATDSWeapon_Ranged::GetDefaultFireMode() const
+{
 	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->FireMode : ETDSWeaponFireMode::SemiAutomatic;
+}
+
+inline TSet<ETDSWeaponFireMode> ATDSWeapon_Ranged::GetAllowedFireModes() const
+{
+	return WeaponDataAsset_Ranged != nullptr
+		? WeaponDataAsset_Ranged->AllowedFireModes
+		: TSet<ETDSWeaponFireMode>();
 }
 
 inline int32 ATDSWeapon_Ranged::GetBulletsPerBurst() const
