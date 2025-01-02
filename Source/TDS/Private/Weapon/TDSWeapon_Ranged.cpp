@@ -2,10 +2,8 @@
 
 #include "Weapon/TDSWeapon_Ranged.h"
 
-#include <Animation/AnimInstance.h>
 #include <Animation/AnimMontage.h>
 #include <Components/CapsuleComponent.h>
-#include <Components/PrimitiveComponent.h>
 #include <Engine/TimerHandle.h>
 #include <Engine/World.h>
 #include <GameFramework/Character.h>
@@ -76,19 +74,23 @@ void ATDSWeapon_Ranged::Reload()
 		return;
 	}
 
-	UAnimInstance* AnimInstance = GetOwnerAnimInstance();
-	if (AnimInstance == nullptr)
-	{
-		return;
-	}
-
 	UAnimMontage* ReloadAnimMontageToPlay = GetCharacterReloadAnimMontage();
-	if (PlayMontage(ReloadAnimMontageToPlay, 1.f, NAME_None, 0.f) > 0.f)
+	TFunction<void(UAnimMontage*, bool)> OnReloadMontageEndedCallback =
+		[this](UAnimMontage* Montage, bool bInterrupted)
+		{
+			OnMontageEnded(Montage, bInterrupted);
+
+			if (bInterrupted)
+			{
+				return;
+			}
+			WeaponState = ETDSWeaponState::Ready;
+			CurrentAmmo = GetMaxAmmo();
+			BP_OnReload();
+		};
+	if (PlayMontage(ReloadAnimMontageToPlay, 1.f, NAME_None, 0.f, OnReloadMontageEndedCallback) > 0.f)
 	{
 		WeaponState = ETDSWeaponState::Reloading;
-
-		OnMontageEndedDelegate.BindUObject(this, &ThisClass::OnReloadMontageEnded);
-		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ReloadAnimMontageToPlay);
 	}
 }
 
@@ -301,12 +303,6 @@ void ATDSWeapon_Ranged::BulletFired()
 		break;
 	}
 
-	UAnimInstance* AnimInstance = GetOwnerAnimInstance();
-	if (AnimInstance == nullptr)
-	{
-		return;
-	}
-
 	UAnimMontage* AnimMontageToPlay = GetCharacterFireAnimMontage();
 	PlayMontage(AnimMontageToPlay, 1.f, NAME_None, 0.f);
 }
@@ -338,66 +334,11 @@ FVector ATDSWeapon_Ranged::CalculateTargetLocation() const
 	return TargetLoc;
 }
 
-void ATDSWeapon_Ranged::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-{
-	if (bInterrupted)
-	{
-		if (WeaponState == ETDSWeaponState::Reloading)
-		{
-			WeaponState = ETDSWeaponState::Ready;
-		}
-		return;
-	}
-	WeaponState = ETDSWeaponState::Ready;
-	CurrentAmmo = GetMaxAmmo();
-	BP_OnReload();
-}
-
 void ATDSWeapon_Ranged::PlayDryFireMontage()
 {
 	check(!HasAmmo());
 	WeaponState = ETDSWeaponState::Ready;
 
-	UAnimInstance* AnimInstance = GetOwnerAnimInstance();
-	if (AnimInstance == nullptr)
-	{
-		return;
-	}
-
 	UAnimMontage* AnimMontageToPlay = GetCharacterDryFireAnimMontage();
 	PlayMontage(AnimMontageToPlay, 1.f, NAME_None, 0.f);
-}
-
-float ATDSWeapon_Ranged::PlayMontage(
-	UAnimMontage* NewAnimMontage, float InPlayRate, FName StartSectionName, float StartTimeSeconds)
-{
-	float Duration = -1.f;
-	if (NewAnimMontage == nullptr)
-	{
-		return Duration;
-	}
-
-	UAnimInstance* AnimInstance = GetOwnerAnimInstance();
-	if (AnimInstance == nullptr)
-	{
-		return Duration;
-	}
-
-	Duration = AnimInstance->Montage_Play(
-			NewAnimMontage, 1.f, EMontagePlayReturnType::MontageLength, /*StartTimeSeconds*/ 0.f);
-	if (Duration > 0.f)
-	{
-		// conor.micallefgreen 23/12/24 TODO: Store NewAnimMontage in property inside TDSWeaponBase
-	}
-	return Duration;
-}
-
-UAnimInstance* ATDSWeapon_Ranged::GetOwnerAnimInstance() const
-{
-	ACharacter* const OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter == nullptr)
-	{
-		return nullptr;
-	}
-	return OwnerCharacter->GetMesh() ? OwnerCharacter->GetMesh()->GetAnimInstance() : nullptr;
 }

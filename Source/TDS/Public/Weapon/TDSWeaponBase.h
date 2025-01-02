@@ -5,6 +5,7 @@
 #include <CoreMinimal.h>
 
 #include <GameFramework/Actor.h>
+#include <Templates/Function.h>
 
 #include "Weapon/TDSWeaponTypes.h"
 #include "Weapon/TDSWeaponData.h"
@@ -34,10 +35,16 @@ public:
 	// Sets default values for this actor's properties
 	ATDSWeaponBase();
 
+	// Begin UObject override
 	void BeginPlay() override;
-	void Tick(float DeltaTime) override;
+	// End UObject override
 
-	void Equip();
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	virtual void Equip() {}
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	virtual void Unequip() {}
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
+	virtual void Drop();
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	FName GetWeaponData() const;
@@ -59,7 +66,25 @@ public:
 	float GetAttackDelay() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
-	bool IsWeaponIsUse() const;
+	virtual bool IsWeaponIsUse() const;
+
+protected:
+	float PlayMontage(
+		UAnimMontage* NewAnimMontage,
+		float InPlayRate,
+		FName StartSectionName,
+		float StartTimeSeconds);
+	float PlayMontage(
+		UAnimMontage* NewAnimMontage,
+		float InPlayRate,
+		FName StartSectionName,
+		float StartTimeSeconds,
+		TFunction<void(UAnimMontage*, bool)> CallbackFunc);
+
+	UAnimInstance* GetOwnerAnimInstance() const;
+
+	UFUNCTION()
+	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Data", Meta = (AllowPrivateAccess = "true"))
@@ -69,7 +94,15 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> WeaponSkeletalMesh;
 
 	UPROPERTY(Transient)
+	TWeakObjectPtr<UAnimInstance> OwnerAnimInstance;
+
+	UPROPERTY(Transient)
 	ETDSWeaponState WeaponState = ETDSWeaponState::Ready;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> ActiveAnimMontage = nullptr;
+
+	FOnMontageEnded OnMontageEndedDelegate;
 };
 
 inline FName ATDSWeaponBase::GetWeaponData() const
@@ -120,4 +153,9 @@ inline float ATDSWeaponBase::GetAttackDelay() const
 inline bool ATDSWeaponBase::IsWeaponIsUse() const
 {
 	return WeaponState == ETDSWeaponState::Active;
+}
+
+inline UAnimInstance* ATDSWeaponBase::GetOwnerAnimInstance() const
+{
+	return OwnerAnimInstance.Get();
 }

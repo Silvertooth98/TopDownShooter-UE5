@@ -10,7 +10,6 @@
 #include "TDSWeapon_Ranged.generated.h"
 
 class AActor;
-class UAnimInstance;
 class UAnimMontage;
 class UPrimitiveComponent;
 
@@ -93,23 +92,13 @@ private:
 
 	FVector CalculateTargetLocation() const;
 
-	UFUNCTION()
-	void OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
 	bool CanShoot() const;
 	bool HasAmmo() const;
 	bool CanReload() const;
 
 	void PlayDryFireMontage();
 
-	float PlayMontage(
-		UAnimMontage* NewAnimMontage, float InPlayRate, FName StartSectionName, float StartTimeSeconds);
-
-	UAnimInstance* GetOwnerAnimInstance() const;
-
 protected:
-	FOnMontageEnded OnMontageEndedDelegate;
-
 	UPROPERTY(Transient)
 	TObjectPtr<UTDSWeaponData_Ranged> WeaponDataAsset_Ranged;
 
