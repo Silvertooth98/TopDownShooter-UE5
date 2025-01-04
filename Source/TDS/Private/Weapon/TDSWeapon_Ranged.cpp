@@ -13,6 +13,8 @@
 #include <Kismet/KismetMathLibrary.h>
 #include <TimerManager.h>
 
+#include <ObjectManagement/CMGWorldObjectPoolSubsystem.h>
+
 #include "Weapon/Projectile/TDSProjectile.h"
 
 void ATDSWeapon_Ranged::BeginPlay()
@@ -206,30 +208,36 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 		return;
 	}
 
+	UCMGWorldObjectPoolSubsystem* ObjectPoolWorldSubsystem = World->GetSubsystem<UCMGWorldObjectPoolSubsystem>();
+	if (ObjectPoolWorldSubsystem == nullptr)
+	{
+		return;
+	}
+
 	const FTransform& MuzzleSocketTransform = WeaponSkeletalMesh->GetSocketTransform(GetMuzzleName());
 	const FVector StartLoc = MuzzleSocketTransform.GetLocation();
 	const FVector TargetLoc = CalculateTargetLocation();
 
 	// conor.micallefgreen 31/12/24 TODO: Implement MuzzleOffset value
-	//const FVector TargetLoc = StartLoc + MuzzleSocketTransform.RotateVector(MuzzleOffset);
+	//const FVector TargetLoc = StartLoc + MuzzleSocketTransform.RotateVector(MuzzleOffset); 
 	const FRotator Rot =
 		UKismetMathLibrary::FindLookAtRotation(StartLoc, TargetLoc);
 	const FVector ScaleVec = FVector(1.f);
 
 	FTransform ProjectileSpawnTransform = FTransform(Rot, StartLoc, ScaleVec);
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = Cast<APawn>(GetOwner());
-	AActor* SpawnedProjectile =
-		World->SpawnActor(GetProjectileClass(), &ProjectileSpawnTransform, SpawnParams);
-
-	BulletFired();
-
-	if (SpawnedProjectile == nullptr)
+	ATDSProjectile* Projectile = ObjectPoolWorldSubsystem->GetOrCreateObject(GetProjectileClass());
+	if (Projectile == nullptr)
 	{
 		return;
 	}
+
+	Projectile->SetActorTransform(ProjectileSpawnTransform);
+	Projectile->SetOwner(this);
+	Projectile->SetInstigator(Cast<APawn>(GetOwner()));
+	Projectile->InitializeProjectile((TargetLoc - StartLoc).GetSafeNormal(), 2000);
+
+	BulletFired();
 
 	// Set the spawned projectile to be ignored by the owning character and this weapon, so the projectile doesn't
 	//	collide with either
@@ -238,11 +246,11 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 	{
 		if (UCapsuleComponent* CapsuleComp = OwnerCharacter->GetCapsuleComponent())
 		{
-			CapsuleComp->IgnoreActorWhenMoving(SpawnedProjectile, bShouldIgnoreProjectile);
+			CapsuleComp->IgnoreActorWhenMoving(Projectile, bShouldIgnoreProjectile);
 		}
 	}
 
-	WeaponSkeletalMesh->IgnoreActorWhenMoving(SpawnedProjectile, bShouldIgnoreProjectile);
+	WeaponSkeletalMesh->IgnoreActorWhenMoving(Projectile, bShouldIgnoreProjectile);
 }
 
 void ATDSWeapon_Ranged::BulletFired()

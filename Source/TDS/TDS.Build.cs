@@ -20,7 +20,7 @@ public class TDS : ModuleRules
                     "Niagara",
                     "EnhancedInput",
                     "CMGGameplayFramework",
-                    "GameplayTags"
+                    "GameplayTags",
                 });
     }
 }

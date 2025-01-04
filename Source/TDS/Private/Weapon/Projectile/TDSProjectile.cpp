@@ -7,6 +7,8 @@
 #include <GameFramework/ProjectileMovementComponent.h>
 #include <PhysicsEngine/RadialForceComponent.h>
 
+#include <ObjectManagement/CMGWorldObjectPoolSubsystem.h>
+
 ATDSProjectile::ATDSProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -26,6 +28,7 @@ ATDSProjectile::ATDSProjectile()
 	ProjectileMovementComponent =
 		CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	check(ProjectileMovementComponent);
+	ProjectileMovementComponent->bAutoActivate = false;
 }
 
 void ATDSProjectile::BeginPlay()
@@ -39,6 +42,20 @@ void ATDSProjectile::BeginPlay()
 	BoxComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnComponentHit);
 }
 
+void ATDSProjectile::InitializeProjectile(const FVector& Direction, float Speed)
+{
+	// Enable collision when the projectile is in use
+	if (BoxComponent != nullptr)
+	{
+		BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	if (ProjectileMovementComponent != nullptr)
+	{
+		ProjectileMovementComponent->Velocity = Direction * Speed;
+		ProjectileMovementComponent->Activate();
+	}
+}
+
 void ATDSProjectile::OnComponentHit(
 	UPrimitiveComponent* HitComponent,
 	AActor* OtherActor,
@@ -46,7 +63,22 @@ void ATDSProjectile::OnComponentHit(
 	FVector normalImpulse,
 	const FHitResult& Hit)
 {
+	const UWorld* const World = GetWorld();
+	UCMGWorldObjectPoolSubsystem* ObjectPoolWorldSubsystem =
+		World != nullptr ? World->GetSubsystem<UCMGWorldObjectPoolSubsystem>() : nullptr;
+	if (ObjectPoolWorldSubsystem == nullptr)
+	{
+		return;
+	}
+
+	if (ProjectileMovementComponent != nullptr)
+	{
+		ProjectileMovementComponent->StopMovementImmediately();
+		ProjectileMovementComponent->Velocity = FVector::ZeroVector;
+		ProjectileMovementComponent->Deactivate();
+	}
+
 	RadialForceComponent->FireImpulse();
 	BP_OnProjectileHit(Hit.Location);
-	Destroy();
+	ObjectPoolWorldSubsystem->ReleasePoolObject(this);
 }

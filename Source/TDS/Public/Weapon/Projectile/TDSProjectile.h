@@ -6,6 +6,8 @@
 
 #include <GameFramework/Actor.h>
 
+#include <ObjectManagement/CMGPoolableObject.h>
+
 #include "TDSProjectile.generated.h"
 
 class AActor;
@@ -16,7 +18,7 @@ class URadialForceComponent;
 class UStaticMeshComponent;
 
 UCLASS(Abstract, Blueprintable)
-class TDS_API ATDSProjectile : public AActor
+class TDS_API ATDSProjectile : public AActor, public ICMGPoolableObject
 {
 	GENERATED_BODY()
 	
@@ -26,6 +28,13 @@ public:
 	// Begin UObject override
 	void BeginPlay() override;
 	// End UObject override
+
+	// Begin ICMGPoolableObject override
+	void SetLastUsedTime_Implementation(float Time) override;
+	float GetLastUsedTime_Implementation() const override;
+	// End ICMGPoolableObject override
+
+	void InitializeProjectile(const FVector& Direction, float Speed);
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
@@ -51,4 +60,16 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
+
+	float LastUsedTime = 0.f;
 };
+
+inline void ATDSProjectile::SetLastUsedTime_Implementation(float Time)
+{
+	LastUsedTime = Time;
+}
+
+inline float ATDSProjectile::GetLastUsedTime_Implementation() const
+{
+	return LastUsedTime;
+}
