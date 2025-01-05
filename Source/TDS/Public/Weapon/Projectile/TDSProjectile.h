@@ -34,7 +34,7 @@ public:
 	float GetLastUsedTime_Implementation() const override;
 	// End ICMGPoolableObject override
 
-	void InitializeProjectile(const FVector& Direction, float Speed);
+	void InitializeProjectile(const FVector& Direction);
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")

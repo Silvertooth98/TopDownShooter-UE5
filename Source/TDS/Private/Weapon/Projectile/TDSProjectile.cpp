@@ -42,7 +42,7 @@ void ATDSProjectile::BeginPlay()
 	BoxComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnComponentHit);
 }
 
-void ATDSProjectile::InitializeProjectile(const FVector& Direction, float Speed)
+void ATDSProjectile::InitializeProjectile(const FVector& Direction)
 {
 	// Enable collision when the projectile is in use
 	if (BoxComponent != nullptr)
@@ -51,7 +51,7 @@ void ATDSProjectile::InitializeProjectile(const FVector& Direction, float Speed)
 	}
 	if (ProjectileMovementComponent != nullptr)
 	{
-		ProjectileMovementComponent->Velocity = Direction * Speed;
+		ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->GetMaxSpeed();
 		ProjectileMovementComponent->Activate();
 	}
 }

@@ -14,9 +14,10 @@
 
 class UAnimInstance;
 class UAnimMontage;
-class ATDSPickuppable;
 class UCurveVector;
 class USkeletalMeshComponent;
+
+class ATDSPickuppable;
 
 #if !UE_BUILD_SHIPPING
 static TAutoConsoleVariable<bool> CVarInfiniteAmmo(

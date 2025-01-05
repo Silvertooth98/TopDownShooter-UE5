@@ -235,7 +235,7 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 	Projectile->SetActorTransform(ProjectileSpawnTransform);
 	Projectile->SetOwner(this);
 	Projectile->SetInstigator(Cast<APawn>(GetOwner()));
-	Projectile->InitializeProjectile((TargetLoc - StartLoc).GetSafeNormal(), 2000);
+	Projectile->InitializeProjectile((TargetLoc - StartLoc).GetSafeNormal());
 
 	BulletFired();
 
