@@ -1,3 +1,3 @@
-# TDS
+# TopDownShooter (UE5)
 
-Developed with Unreal Engine 5
+Work-in-progress top-down shooter game, developed in Unreal Engine 5
