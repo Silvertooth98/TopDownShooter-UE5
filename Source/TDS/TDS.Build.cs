@@ -19,7 +19,7 @@ public class TDS : ModuleRules
                     "AIModule",
                     "Niagara",
                     "EnhancedInput",
-                    "CMGGameplayFramework",
+                    "CMGFramework",
                     "GameplayTags",
                 });
     }

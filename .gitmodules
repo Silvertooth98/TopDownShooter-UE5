@@ -1,0 +1,3 @@
+[submodule "Plugins/CMGFramework"]
+	path = Plugins/CMGFramework
+	url = https://github.com/Silvertooth98/CMGFramework

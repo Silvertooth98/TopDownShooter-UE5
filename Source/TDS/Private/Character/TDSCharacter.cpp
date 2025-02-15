@@ -15,7 +15,7 @@
 #include <Materials/Material.h>
 #include <UObject/ConstructorHelpers.h>
 
-#include <CMGGameplayFramework.h>
+#include <CMGFramework.h>
 
 ATDSCharacter::ATDSCharacter()
 {

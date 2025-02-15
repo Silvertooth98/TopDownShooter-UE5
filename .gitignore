@@ -13,11 +13,11 @@ Saved
 *.xcodeproj
 *.xcworkspace
 **/Content/Audio
-**/Content/Characters
+**/Content/Characters/*
+!**/Content/Characters/Mannequins/Animations/*
 **/Content/Cursor
 **/Content/StarterContent
 **/Content/LevelPrototyping
-**/Animations
 Content/Blueprints/Input/Actions/IA_SetDestination_Click.uasset
 Content/Blueprints/Input/Actions/IA_SetDestination_Touch.uasset
 Content/TopDown/Maps/TopDownMap_BuiltData.uasset
