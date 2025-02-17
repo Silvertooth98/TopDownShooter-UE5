@@ -14,8 +14,7 @@
 #include <TimerManager.h>
 
 #include <ObjectManagement/CMGWorldObjectPoolSubsystem.h>
-
-#include "Weapon/Projectile/TDSProjectile.h"
+#include <Weapon/Projectile/CMGProjectile.h>
 
 void ATDSWeapon_Ranged::BeginPlay()
 {
@@ -226,16 +225,14 @@ void ATDSWeapon_Ranged::Shoot_Projectile()
 
 	FTransform ProjectileSpawnTransform = FTransform(Rot, StartLoc, ScaleVec);
 
-	ATDSProjectile* Projectile = ObjectPoolWorldSubsystem->GetOrCreateObject(GetProjectileClass());
+	ACMGProjectile* Projectile = ObjectPoolWorldSubsystem->GetOrCreateObject(GetProjectileClass());
 	if (Projectile == nullptr)
 	{
 		return;
 	}
 
-	Projectile->SetActorTransform(ProjectileSpawnTransform);
-	Projectile->SetOwner(this);
-	Projectile->SetInstigator(Cast<APawn>(GetOwner()));
-	Projectile->InitializeProjectile((TargetLoc - StartLoc).GetSafeNormal());
+	FCMGProjectileData ProjectileData(this, Cast<APawn>(GetOwner()), (TargetLoc - StartLoc).GetSafeNormal());
+	Projectile->InitializeProjectile(ProjectileSpawnTransform, ProjectileData);
 
 	BulletFired();
 

@@ -10,8 +10,10 @@
 
 class UAnimInstance;
 class UAnimMontage;
+
+class ACMGProjectile;
+
 class ATDSPickuppable;
-class ATDSProjectile;
 
 UCLASS(Abstract, Blueprintable)
 class TDS_API UTDSWeaponData : public UPrimaryDataAsset
@@ -80,7 +82,7 @@ public:
 		BlueprintReadOnly,
 		Category = "Weapon|Ranged|Projectile",
 		Meta = (EditCondition = "UseMode == ETDSWeaponUseMode::Projectile", EditConditionHides))
-	TSubclassOf<ATDSProjectile> ProjectileClass = nullptr;
+	TSubclassOf<ACMGProjectile> ProjectileClass = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ranged")
 	float Range = 0.f;

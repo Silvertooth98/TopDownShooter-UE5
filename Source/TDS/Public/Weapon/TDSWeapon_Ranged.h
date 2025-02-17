@@ -13,7 +13,7 @@ class AActor;
 class UAnimMontage;
 class UPrimitiveComponent;
 
-class ATDSProjectile;
+class ACMGProjectile;
 
 struct FTimerHandle;
 
@@ -53,7 +53,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	FName GetMuzzleName() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
-	TSubclassOf<ATDSProjectile> GetProjectileClass() const;
+	TSubclassOf<ACMGProjectile> GetProjectileClass() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
 	float GetRange() const;
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Data")
@@ -136,7 +136,7 @@ inline FName ATDSWeapon_Ranged::GetMuzzleName() const
 	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->MuzzleName : TEXT("Invalid");
 }
 
-inline TSubclassOf<ATDSProjectile> ATDSWeapon_Ranged::GetProjectileClass() const
+inline TSubclassOf<ACMGProjectile> ATDSWeapon_Ranged::GetProjectileClass() const
 {
 	return WeaponDataAsset_Ranged != nullptr ? WeaponDataAsset_Ranged->ProjectileClass : nullptr;
 }
